@@ -3,12 +3,14 @@ $title = "requests";
 $icon = "nc-layers-3";
 include __DIR__.'/template/header.php';
 
+$errors=[] ;
+
 $requests = $mysqli -> query("select * from requests order by request_id")-> fetch_all(MYSQLI_ASSOC);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
   $requestId = $_POST["request_id"];
-  $timenow = $timeNow = date("Y-m-d  H:i:s");
+  $timenow  = date("Y-m-d  H:i:s", strtotime("+2 hours") );
 
   if( isset($_POST["approve"]) || isset($_POST["decline"]) ){
 
@@ -21,11 +23,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
   }elseif ( isset($_POST['return']) ) {
 
-    $status = "returned";
+    $currentStatus = $mysqli -> query("select status from requests where request_id = $requestId")-> fetch_assoc();
 
-    $st = $mysqli->prepare("update requests set status = ?, returnDate= ? where request_id = ?; ");
-    $st -> bind_param("ssd" ,$status, $timenow, $requestId);
-    $st -> execute();
+    if($currentStatus['status'] == "approved" ){
+      $status = "returned";
+
+      $st = $mysqli->prepare("update requests set status = ?, returnDate= ? where request_id = ?; ");
+      $st -> bind_param("ssd" ,$status, $timenow, $requestId);
+      $st -> execute();
+    }else {
+      array_push($errors,"Can't choose return if the current state is not approved");
+      include "../template/errors.php";
+      die();
+    }
 
   }
 
@@ -58,12 +68,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <div class="card">
   <div class="card-body">
     <div class="content">
-
       <p>Requests: <?php echo count($requests); ?></p>
       <div class="table-responsive">
         <table class="table table-striped">
           <thead>
             <tr>
+              <th>Request ID:</th>
               <th>User Name:</th>
               <th>User ID:</th>
               <th>Book Name:</th>
@@ -85,6 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               $books = $mysqli -> query("select name from books where id = $book_id")-> fetch_assoc(); ?>
 
               <tr>
+                  <td><?php echo $request["request_id"]; ?></td>
+
                   <td><?php echo $user_name["name"]; ?></td>
                   <td><?php echo $request["user_id"]; ?></td>
 

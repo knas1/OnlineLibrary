@@ -53,9 +53,11 @@ require_once 'config/app.php';
           <li class="nav-item">
             <a class="nav-link" href="<?php echo $config['app_url'] ?>"><?php echo 'Welcome '.$_SESSION["user_name"]; ?></a>
           </li>
+          <?php if($_SESSION['user_role']=='user'){ ?>
           <li class="nav-item">
             <a class="nav-link" href="<?php echo $config['app_url']."requests.php"?>">Requests</a>
           </li>
+          <?php } ?>
           <?php if($_SESSION['user_role']=='admin'){ ?>
             <li class="nav-item">
               <a class="nav-link" href="<?php echo $config['app_url']."admin"?>">Admin Page</a>

@@ -2,7 +2,6 @@
 $title="Main Page";
 require_once 'template/header.php';
 require_once 'classes/User.php';
-require_once 'config/database.php';
 
 //setcookie('username','Nawaf',time()+30*24*60*60);
 
@@ -41,24 +40,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset( $_POST["borrow"] ) ){
 
   $NumberOfPending = $mysqli -> query("select status from requests where user_id=$user_id  and status='pending' ")->fetch_all(MYSQLI_ASSOC);
   $NumberOfPending = count($NumberOfPending);
+
+  #Check if the user has 3 pending request
   if($NumberOfPending>=3){
     array_push($errors,"Can't Send a new request while you have 3 pending requests");
-    include 'template/errors.php';
-    die();
+
+  }else {
+
+    $timenow  = date("Y-m-d  H:i:s", strtotime("+2 hours") );
+    $st = $mysqli->prepare("insert into requests (user_id, book_id, requestDate) values(?, ?, ?) ");
+    $st -> bind_param("dds", $user_id, $book_id,$timenow);
+    $book_id = $_POST['book_id'];
+    $st -> execute();
+
+    if($st->error) echo $st->error;
+    else{
+        $_SESSION['success_message'] = "Request sent successfully";
+        echo "<script>location.href='index.php'</script>";
+    }
   }
-
-  $timenow = $timeNow = date("Y-m-d  H:i:s");
-  $st = $mysqli->prepare("insert into requests (user_id, book_id, requestDate) values(?, ?, ?) ");
-  $st -> bind_param("dds", $user_id, $book_id,$timenow);
-  $book_id = $_POST['book_id'];
-  $st -> execute();
-
-  if($st->error) echo $st->error;
-  else{
-      $_SESSION['success_message'] = "Request sent successfully";
-      echo "<script>location.href='index.php'</script>";
-}
-
 
 }
 
